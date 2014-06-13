@@ -7,7 +7,7 @@ import re
 import pdb
 import build
 
-build.clean_file()
+# build.clean_file()
 all_emojis = build.build_message()
 
 class Bot(object):
@@ -34,51 +34,43 @@ class Bot(object):
     def listen_on_queue(self):
         params = {"queue_id": self.q_id, "last_event_id": self.last_event_id}
         r = requests.get(self.events_url, auth=self.bot_auth, params=params)
-        print r.content
         return r.json()
         # pdb.set_trace()
 
-    def post_emojis(self):
+    def post_some_emojis(self, recipient):
         all_emojis_list = all_emojis.split(" ")
         size = len(all_emojis_list)
         start = random.randint(0,size)
-        some_emojis = " ".join(all_emojis_list[start:start+20])
+        some_emojis = " ".join(all_emojis_list[start:start+21])
         params = {"type": "private",
-                  "to": "allison@hackerschool.com",
+                  "to": recipient,
                   "content": some_emojis}
         r = requests.post(self.message_url, auth=self.bot_auth, params=params)
+
+    def post_all_emojis(self, recipient):
+        with open('cleaned_emoji.txt', 'r') as f:
+            emojis = " ".join([e.strip() for e in f.readlines()])
+        params = {"type": "private",
+                  "to": recipient,
+                  "content": json.dumps(emojis)}
+        r = requests.post(self.message_url, auth=self.bot_auth, data=params)
         print r.content
         print r.request.url
-        pdb.set_trace()
-
-    def post_yay_message(self, gif, person_to_ping, subject, stream, msg_type="stream"):
-        if self.muted:
-            return
-        if person_to_ping:
-            person_to_ping = "@**" + person_to_ping + "**"
-
-        params = {
-            "type" : msg_type,
-            "content" : person_to_ping + " [Yay!]("+ gif + ")" + '\n' + "[(about me)]("+ self.about_me + ")",
-            "to" : stream,
-            "subject" : subject,
-            }
-        r = requests.post(self.post_url, params=params, auth=self.bot_auth)
-        # TODO: logging on error
-        return r
-
-
-    def get_recipients(self, message):
-        """ Return the properly encoded string of email addresses that received a message."""
-        emails = [r["email"] for r in message["display_recipient"]]
-        return json.dumps(emails)
 
 
 if __name__ == "__main__":
     b = Bot()
 
     while True:
-        messages = b.listen_on_queue()
-        if messages:
-            for m in messages:
-                b.post_emojis()
+        response = b.listen_on_queue()
+        for event in response['events']:
+            if event.has_key('message'):
+                sender = event['message']['sender_email']
+                b.last_event_id = event['message']['id']
+                if sender != "emoji-bot@students.hackerschool.com":
+                    print event
+                    message = event['message']['content']
+                    if "ALL THE EMOJI" in message:
+                        b.post_all_emojis(sender)
+                    else:
+                        b.post_some_emojis(sender)

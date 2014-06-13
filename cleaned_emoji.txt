@@ -7,7 +7,7 @@
 :mountain_cableway:
 :non-potable_water:
 :potable_water:
-:le:
+:hackerschool:
 :bookmark_tabs:
 :baby:
 :baby_bottle:
@@ -436,7 +436,6 @@
 :seedling:
 :dog:
 :dog2:
-::
 :dollar:
 :dolls:
 :dolphin:
@@ -591,13 +590,10 @@
 :triangular_flag_on_post:
 :triangular_ruler:
 :gun:
-:hool:
 :tophat:
 :womans_hat:
-:at:
 :heart:
 :hushed:
-:ty:
 :wind_chime:
 :ship:
 :shirt:
