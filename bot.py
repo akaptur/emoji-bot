@@ -6,8 +6,9 @@ import json
 import re
 import pdb
 import build
+from collections import namedtuple
 
-# build.clean_file()
+Message = namedtuple('Message', 'text, sender')
 
 class Bot(object):
     """ A bot to send you emojis. """
@@ -24,12 +25,20 @@ class Bot(object):
         self.last_event_id = -1
 
         with open('cleaned_emoji.txt', 'r') as f:
+            # [:foo:, :bar:, :baz:]
             self.emojis = [em.strip() for em in f.readlines()]
+
+        self.emoji_words = [em[1:-1] for em in self.emojis]
 
         # With text: `:foo:` :foo:
         self.emojis_with_text = ["`"+em+"` "+em for em in self.emojis]
 
         self.register_for_messages()
+
+    def start(self):
+        while True:
+            response = self.listen_on_queue()
+            self.parse_and_dispatch(response)
 
     def register_for_messages(self):
         params = {"event_types" : ['messages']}
@@ -47,37 +56,52 @@ class Bot(object):
                 sender = event['message']['sender_email']
                 b.last_event_id = event['message']['id']
                 if sender != "emoji-bot@students.hackerschool.com":
-                    print event
-                    message = event['message']['content']
-                    if "ALL THE EMOJI" in message:
-                        self.post_all_emojis(sender)
-                    else:
-                        self.teach_some_emojis(sender)
+                    msg = Message(event['message']['content'], event['message']['sender_email'])
+                    self.dispatch_on(msg)
 
+    def dispatch_on(self, message):
+        if "ALL THE EMOJI" in message.text:
+            self.post_all_emojis(message)
+        elif "translate" in message.text:
+            self.translate(message)
+        else:
+            self.teach_some_emojis(message)
 
-    def teach_some_emojis(self, recipient):
-        size = len(self.emojis_with_text)
-        start = random.randint(0,size)
-        some_emojis = "\n".join(self.emojis_with_text[start:start+11])
-
+    def reply(self, recipient, content):
         params = {"type": "private",
                   "to": recipient,
-                  "content": some_emojis}
-        r = requests.post(self.message_url, auth=self.bot_auth, params=params)
-
-    def post_all_emojis(self, recipient):
-        string_emojis = "".join(self.emojis)
-        params = {"type": "private",
-                  "to": recipient,
-                  "content": json.dumps(string_emojis)}
+                  "content": content}
         r = requests.post(self.message_url, auth=self.bot_auth, data=params)
         print r.content
         print r.request.url
 
+    def teach_some_emojis(self, message):
+        size = len(self.emojis_with_text)
+        start = random.randint(0,size)
+        some_emojis = "\n".join(self.emojis_with_text[start:start+11])
+        self.reply(message.sender, some_emojis)
+
+    def post_all_emojis(self, message):
+        string_emojis = "".join(self.emojis)
+        self.reply(message.sender, json.dumps(string_emojis))
+
+    def translate(self, message):
+        words = message.text.split(' ')
+        to_translate = words[(words.index('translate') + 1):]
+        reply = []
+        for word in to_translate:
+            translation = self.match(word)
+            if translation:
+                reply.append(translation)
+            else:
+                reply.append(word)
+        self.reply(message.sender, " ".join(reply))
+
+    def match(self, word):
+        if word in self.emoji_words:
+            return ":%s:" % word
+
 
 if __name__ == "__main__":
     b = Bot()
-
-    while True:
-        response = b.listen_on_queue()
-        b.parse_and_dispatch(response)
+    b.start()
