@@ -6,6 +6,7 @@ import json
 import re
 import pdb
 import build
+import string
 from collections import namedtuple
 
 Message = namedtuple('Message', 'text, sender')
@@ -60,12 +61,14 @@ class Bot(object):
                     self.dispatch_on(msg)
 
     def dispatch_on(self, message):
-        if "ALL THE EMOJI" in message.text:
+        if message.text.upper() == "ALL THE EMOJIS":
             self.post_all_emojis(message)
+        elif message.text.upper() == "LEARN ME EMOJIS":
+            self.teach_some_emojis(message)
         elif "translate" in message.text.lower():
             self.translate(message)
         else:
-            self.teach_some_emojis(message)
+            self.encode_message(message)
 
     def reply(self, recipient, content):
         params = {"type": "private",
@@ -100,6 +103,17 @@ class Bot(object):
     def match(self, word):
         if word.lower() in self.emoji_words:
             return ":%s:" % word
+
+    def encode_message(self, message):
+        with open('emoji_code.txt', 'r') as f:
+            emoji_code = json.load(f)
+        reply = []
+        for character in message.text.lower():
+            if character in string.ascii_lowercase:
+                reply.append(emoji_code[character])
+            else:
+                reply.append(character)
+        self.reply(message.sender, "".join(reply))
 
 
 if __name__ == "__main__":
