@@ -62,7 +62,7 @@ class Bot(object):
     def dispatch_on(self, message):
         if "ALL THE EMOJI" in message.text:
             self.post_all_emojis(message)
-        elif "translate" in message.text:
+        elif "translate" in message.text.lower():
             self.translate(message)
         else:
             self.teach_some_emojis(message)
@@ -72,8 +72,8 @@ class Bot(object):
                   "to": recipient,
                   "content": content}
         r = requests.post(self.message_url, auth=self.bot_auth, data=params)
-        print r.content
-        print r.request.url
+        # print r.content
+        # print r.request.url
 
     def teach_some_emojis(self, message):
         size = len(self.emojis_with_text)
@@ -86,7 +86,7 @@ class Bot(object):
         self.reply(message.sender, json.dumps(string_emojis))
 
     def translate(self, message):
-        words = message.text.split(' ')
+        words = re.split(r'(\W+)', message.text)
         to_translate = words[(words.index('translate') + 1):]
         reply = []
         for word in to_translate:
@@ -95,10 +95,10 @@ class Bot(object):
                 reply.append(translation)
             else:
                 reply.append(word)
-        self.reply(message.sender, " ".join(reply))
+        self.reply(message.sender, "".join(reply))
 
     def match(self, word):
-        if word in self.emoji_words:
+        if word.lower() in self.emoji_words:
             return ":%s:" % word
 
 
