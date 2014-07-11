@@ -34,6 +34,9 @@ class Bot(object):
         # With text: `:foo:` :foo:
         self.emojis_with_text = ["`"+em+"` "+em for em in self.emojis]
 
+        with open('emoji_code.txt', 'r') as f:
+            self.emoji_code = json.load(f)
+
         self.register_for_messages()
 
     def start(self):
@@ -61,14 +64,16 @@ class Bot(object):
                     self.dispatch_on(msg)
 
     def dispatch_on(self, message):
-        if message.text.upper() == "ALL THE EMOJIS":
+        if message.text == "ALL THE EMOJIS":
             self.post_all_emojis(message)
-        elif message.text.upper() == "LEARN ME EMOJIS":
-            self.teach_some_emojis(message)
         elif "translate" in message.text.lower():
             self.translate(message)
+        elif "encrypt" in message.text.lower():
+            self.encrypt_message(message)
+        elif "decrypt" in message.text.lower():
+            self.decrypt_message(message)
         else:
-            self.encode_message(message)
+            self.teach_some_emojis(message)
 
     def reply(self, recipient, content):
         params = {"type": "private",
@@ -104,15 +109,14 @@ class Bot(object):
         if word.lower() in self.emoji_words:
             return ":%s:" % word
 
-    def encode_message(self, message):
-        with open('emoji_code.txt', 'r') as f:
-            emoji_code = json.load(f)
-        reply = []
-        for character in message.text.lower():
-            if character in string.ascii_lowercase:
-                reply.append(emoji_code[character])
-            else:
-                reply.append(character)
+    def encrypt_message(self, message):
+        reply = [self.emoji_code[character] if character in string.ascii_lowercase else character for character in message.text.lower()]
+        self.reply(message.sender, "".join(reply))
+
+    def decrypt_message(self, message):
+        words = re.split(r'([:]\w+[:])', message.text)
+        #need regex here to parse emojis, also should name character something more descriptive.
+        reply = [self.emoji_code[word] if word in self.emoji_code else word for word in words]
         self.reply(message.sender, "".join(reply))
 
 
