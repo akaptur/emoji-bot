@@ -11,6 +11,14 @@ Say anything to the bot to get ten random emojis.
 #### ALL THE EMOJIS
 Say "ALL THE EMOJIS" to the bot to get all the emojis back in a single message.  WARNING: This will slow down your Zulip noticeably.
 
+#### Translate
+Say "Translate" with a message to the bot to get your message back with emoji-commands turned into actual emojis. (Ex: "translate smile" will return the smile emoji.)
+
+#### Encrypt
+Say "Encrypt" to the bot to get your message encrypted in emojis. (Ex: "hello world" will return an encrypted string where individual letters have been replaced with their randomly chosen emoji counterparts.)
+
+#### Decrypt
+Say "Decrypt" to the bot to get an emoji-encrypted message (see above) returned in plaintext.
 
 ##Contributing
 
