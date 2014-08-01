@@ -52,7 +52,12 @@ class Bot(object):
     def listen_on_queue(self):
         params = {"queue_id": self.q_id, "last_event_id": self.last_event_id}
         r = requests.get(self.events_url, auth=self.bot_auth, params=params)
-        return r.json()
+        try:
+            return r.json()
+        except ValueError:
+            print r.content # for logging
+            return {'events': []} # stub out
+
 
     def parse_and_dispatch(self, response):
         for event in response['events']:
