@@ -61,7 +61,7 @@ class Bot(object):
 
     def parse_and_dispatch(self, response):
         for event in response['events']:
-            if event.has_key('message'):
+            if event.has_key('message') and event['message']['type'] == 'private':
                 sender = event['message']['sender_email']
                 b.last_event_id = event['message']['id']
                 if sender != "emoji-bot@students.hackerschool.com":
